@@ -98,3 +98,5 @@ VMware Workstation 版本使用当前最新 17.5.2 版本。
 8. [Zabbix 监控系统搭建](./08-Zabbix%20监控系统搭建.md)
 
 9. [DevOps 开发运维结合](./09-DevOps%20开发运维结合.md)
+
+10. [CI/CD](./10-CICD%20持续化.md)

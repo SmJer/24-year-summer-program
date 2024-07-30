@@ -34,6 +34,8 @@
    yarn
    ```
 
+   > 使用 yarn 或其他包管理器若报错则需使用管理员权限打开 PowerShell 使用 `set-ExecutionPolicy RemoteSigned` 命令。
+
    ![20240729151640](https://oss.isiou.cn/images/20240729151640.png)
 
    ![20240729151703](https://oss.isiou.cn/images/20240729151703.png)
@@ -373,5 +375,7 @@
    ![20240729183711](https://oss.isiou.cn/images/20240729183711.png)
 
    访问服务器的 3000 端口查看是否部署并运行：
+
+   > 服务器需先放行 3000 端口。
 
    ![20240729183810](https://oss.isiou.cn/images/20240729183810.png)

@@ -259,8 +259,6 @@ DevOps 不是某一个单一工具，而是一组过程、方法与系统的统�
 
      显示此项时即为安装完成。
 
-   - 使用如上图所示地址，进入后台页面：
-
 ### GO Web 应用部署
 
 1. 前置任务：
@@ -269,15 +267,9 @@ DevOps 不是某一个单一工具，而是一组过程、方法与系统的统�
 
    - 配置 Go 运行环境：
 
-```shell
-# 安装 Git node.js gnupg
-apt update
-apt install git
-apt install gnupg
-
-# 这里所安装的 npm 为老版，使用老版可能会导致新型项目出现不兼容问题，但在此项目中可以使用，如介意可自行寻找新版安装
-apt install npm
-```
+     ```shell
+     wget
+     ```
 
 #### go 运行环境安装
 
@@ -627,5 +619,3 @@ go build -o gfast-app ./main.go # gfast-app 为执行文件的文件名 名称�
 4. 前端部署参考上一节中前端部署，步骤相同。
 
 ### Docker 部署 PHP Web 应用
-
-1. 拉取仓库，进入其
