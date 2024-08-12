@@ -1,7 +1,5 @@
 # DevOps 开发运维结合
 
-## 概念
-
 DevOps 不是某一个单一工具，而是一组过程、方法与系统的统称，用于促进开发和运营等部门之间的沟通、协作与整合。主要通过自动化软件交付和测试，使得软件的构建、发布更加快捷和可靠。
 
 关于 DevOps 的更多详细资料请自行查找。
@@ -16,17 +14,11 @@ DevOps 不是某一个单一工具，而是一组过程、方法与系统的统�
 2. Java Web 应用：
    地址：<https://gitee.com/wuxw7/MicroCommunity>
 
-3. Python Web 应用：
-   地址：<https://gitee.com/insistence2022/dash-fastapi-admin>
-
-4. PHP Web 应用：
+3. PHP Web 应用：
    地址：<https://gitee.com/meystack/swiftadmin>
 
-5. Go Web 应用：
+4. Go Web 应用：
    地址：<https://gitee.com/tiger1103/gfast>
-
-6. NodeJs Web 应用：
-   地址：<https://strapi.io/>
 
 ### .NET Web 应用部署
 
@@ -204,8 +196,6 @@ DevOps 不是某一个单一工具，而是一组过程、方法与系统的统�
    git clone https://gitee.com/java110/MicroCommunityWeb.git
    ```
 
-### Python Web 应用部署
-
 ### PHP Web 应用部署
 
 1. 前置任务：
@@ -259,279 +249,9 @@ DevOps 不是某一个单一工具，而是一组过程、方法与系统的统�
 
      显示此项时即为安装完成。
 
-### GO Web 应用部署
-
-1. 前置任务：
-
-   - 配置 Node.js 与 npm 包管理工具，参考如上。
-
-   - 配置 Go 运行环境：
-
-     ```shell
-     wget
-     ```
-
-#### go 运行环境安装
-
-> 访问 <https://golang.google.cn/dl/>
-
-下载 适用于 Debian 系统的版本
-![20240724142224](https://img.smueejer.com/20240724142224.png?images)
-下载完成后 传输到虚拟机中
-
-```shell
-# 在虚拟机中创建文件夹
-mkdir /go-two
-# 通过 scp 协议把主机文件上传至虚拟机对应文件夹中
-scp -r H:\迅雷下载\go1.22.5.linux-amd64.tar.gz root@192.168.100.100:/go-two
-# 打开对应文件夹，解压文件到所在目录下
-cd /go-two
-tar -xzvf go1.22.5.linux-amd64.tar.gz
-# 添加 go 的 PATH 环境变量
-vim ~/.bashrc
-export PATH=$PATH:/go-two/go/bin
-# 添加完成后 重新加载配置文件
-source ~/.bashrc
-# 验证安装 出现版号字样即为安装成功
-go version
-```
-
-#### 拉取 gitee 仓库项目框架
-
-```shell
-# 新建文件夹用于存储项目 并切换目录
-mkdir /go && cd /go
-# 后端
-git clone -b os-v3.2 https://gitee.com/tiger1103/gfast.git
-# 前端
-git clone -b os-v3.2 https://gitee.com/tiger1103/gfast-ui.git
-```
-
-> 拉取完成后安装 前 后 端依赖
-
-```shell
-## 后端
-# 进入后端文件根目录下
-cd /go/gfast
-# 安装依赖前先更改 go 国内镜像源，否则无法获取
-go env -w GO111MODULE=on
-go env -w GOPROXY=https://goproxy.cn
-# 安装依赖
-go mod tidy
-```
-
-```shell
-## 前端
-# 进入前端文件根目录下
-cd /go/gfast-ui
-# 安装前端依赖
-npm install --registry=https://registry.npmmirror.com
-```
-
-#### 安装数据库并导入 gitee 项目里给予的 sql 文件
-
-```shell
-# 首先 先更新 mysql 数据库源 进入网站下载 mysql.deb文件
-https://dev.mysql.com/downloads/file/?id=531268
-# 在虚拟机里新建目录 mysql 用来接收下一步传输的 mysql.deb 文件
-mkdir /mysql && cd /mysql
-# 通过 scp协议 远程传输到虚拟机里
-scp -r H:\迅雷下载\mysql-apt-config_0.8.32-1_all.deb root@192.168.100.100:/mysql
-```
-
-> 传输完成后 安装 mysql 镜像源
-
-```shell
-dpkg -i mysql-apt-config_0.8.32-1_all.deb
-```
-
-> 如图选择
-> ![20240724173223](https://img.smueejer.com/20240724173223.png?images) > ![20240724173256](https://img.smueejer.com/20240724173256.png?images) > ![20240724173325](https://img.smueejer.com/20240724173325.png?images)
-> 至此镜像源成功安装
-
-```shell
-# 安装 mysql 并设置密码 此项目中账号密码皆为 `root`
-apt update
-apt search mysql-server
-apt install mysql-server
-# 安装完成后连接mysql
-mysql -p
-# 创建数据库 并 进入数据库
-CREATE DATABASE gfast;
-USE gfast;
-# 导入 sql 文件
-source /go/gfast/resource/data/gfast-v32.sql
-# 或者在root模式下运行
-mysql -u root -p gfast < /go/gfast/resource/data/gfast-v32.sql
-# 给予 root 用户最高权限
-use mysql;
-update user set host='%' where user='root';
-grant all privileges on *.* to 'root'@'%';
-flush privileges;
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION ;
-```
-
-> 打开 Navicat 检查连接数据库情况
-> ![20240724210634](https://img.smueejer.com/20240724210634.png?images)
->
-> 如图即为连接成功
-
-#### 修改项目配置文件
-
-```shell
-# 复制项目文件到同意路径下 更改后缀为 yaml
-cp /go/gfast/manifest/config/config.yaml.bak /go/gfast/manifest/config/config.yaml
-# 修改配置文件
-vim /go/gfast/manifest/config/config.yaml #如下图所示
-```
-
-![20240724211924](https://img.smueejer.com/20240724211924.png?images)
-
-> 以下回答按绿框从左向右逐一表示
->
-> 1. mysql 用户名，此项目中为 root
->
-> 2. 密码，此项目中为 root
->
-> 3. 虚拟机 ip
->
-> 4. 所创建数据库名称，此项目中为 gfast
->
-> 修改完成后保存退出
-
-#### 安装 redis 并配置文件
-
-```shell
-# 安装
-apt install redis
-# 配置
-vim /etc/redis/redis.conf
-# 如下图
-可以通过 vim指令 快速寻找
-ESC状态下 `/查找的内容` 能快速查找匹配项
-回车确定后，可通过N，n来进行 上一个&&下一个
-```
-
-![20240724213031](https://img.smueejer.com/20240724213031.png?images)
-
-> 修改 bind 为虚拟机 ip
->
-> 并项目 IP 为 `192.168.100.100`
-
-![20240724213151](https://img.smueejer.com/20240724213151.png?images)
-
-> 取消 requirepass 注释 并在后面更改为自己的 redis 密码
->
-> 本项目密码为 `root`
-
-> 修改完成后保存退出
-
-> 打开项目配置文件（至于为什么不一起配置，是为了方便自己也为了方便各位理解配置文件修改的意义）
-
-```shell
-# 打开项目配置文件
-vim /go/gfast/manifest/config/config.yaml
-# 更改添加下列选项 如图
-```
-
-![20240724213807](https://img.smueejer.com/20240724213807.png?images)
-
-> 1. 虚拟机本机 ip
->
-> 2. 添加刚才设置的 redis 密码选项，本项目中为 `root`
->
-> 重启 redis 执行命令`systemctl restart redis`
->
-> 保存退出
-
-![20240724213449](https://img.smueejer.com/20240724213449.png?images)
-
-> 如图即为连接成功
-
-#### 安装 nginx 并修改配置文件
-
-> 在安装 nginx 之前，先修改一下前端项目配置文件
-
-```shell
-# 切换到前端根目录
-cd /go/gfast-ui
-# 打开要修改的隐藏文件
-vim .env.production
-# 如图
-```
-
-![20240724215017](https://img.smueejer.com/20240724215017.png?images)
-
-> 修改 VITE_PUBLIC_PATH 为空
->
-> 修改完成后打包前端文件 `npm run build` 打包完成后会在前端根目录生成 dist 文件夹，复制粘贴到下文配置 nginx 文件的 对应注释处。
-
-```shell
-# 安装
-apt update
-apt install nginx -y
-# 打开 并 更改配置为
-vim /etc/nginx/sites-enabled/default
-server {
-   # 监听 8889 端口
-   listen 8889;
-   location / {
-      root   /go/gfast-ui/dist; # 前端打包 dist 文件夹路径
-      index  index.html index.htm;
-   }
-   location /api/v1 {
-      proxy_pass http://192.168.100.100:8808; # 虚拟机ip 192.168.100.100：后端端口8808
-      proxy_http_version 1.1;
-   }
-}
-```
-
-启动或重启 nginx 服务
-
-```shell
-# 开启
-systemctl start nginx
-# 重启
-systemctl restart nginx
-```
-
-> 在浏览器打开 192.168.100.100:8889 进入前端页面
-
-#### 创建后端可执行文件 并开启后端服务
-
-```shell
-# 进入后端根目录
-cd /go/gfast
-# 创建可执行文件
-go build -o gfast-app ./main.go # gfast-app 为执行文件的文件名 名称不唯一
-# 执行文件
-./gfast-app # 如图
-```
-
-![20240724220358](https://img.smueejer.com/20240724220358.png?images)
-
-> 进入网页 刷新页面 进入后端页面 如图
-
-![20240724220518](https://img.smueejer.com/20240724220518.png?images)
-
-> 部署成功！
-
-### Node.js Web 应用部署
-
 ## 使用 Docker 部署应用
 
-本文余下内容将使用 Docker 部署以下应用：
-
-1. .NET Web 应用：
-   地址：<https://gitee.com/zuohuaijun/Admin.NET>
-
-2. PHP Web 应用：
-   地址：<https://gitee.com/meystack/swiftadmin>
-
-3. NodeJs Web 应用：
-   地址：<https://strapi.io/>
-
-### 前置任务
+### 前置任务：安装 Docker
 
 安装并配置 Docker 服务：
 
@@ -617,5 +337,3 @@ go build -o gfast-app ./main.go # gfast-app 为执行文件的文件名 名称�
    此步骤完成后，原本在容器内运行的 .NET 服务已经暴露在本机的 5005 端口上。
 
 4. 前端部署参考上一节中前端部署，步骤相同。
-
-### Docker 部署 PHP Web 应用

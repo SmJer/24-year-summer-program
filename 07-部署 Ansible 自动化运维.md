@@ -13,7 +13,7 @@ Ansible 是一个基于 Python 开发的配置管理和应用部署工具，现�
    安装 Ansible 和 ssh 认证：
 
    ```shell
-   apt install ansible ansible-core sshpass
+   apt update && apt install ansible ansible-core sshpass -y
    ```
 
 2. 配置文件并运行：
@@ -27,7 +27,7 @@ Ansible 是一个基于 Python 开发的配置管理和应用部署工具，现�
 
    - 配置 Inventory 文件：
 
-     `/etc/ansible/hosts` 文件是 Ansible 中用于定义要管理的主机列表的关键文件，其格式一般为：
+     Inventory 文件是 Ansible 中用于定义要管理的主机列表的关键文件，其格式一般为（文件名可自定义，此处以 `/etc/ansible/host` 为例）：
 
      > 代表 webservers 组内有 192.168.110.121 与 192.168.110.122 两台主机，可以批量对它们进行操作。
 
@@ -70,7 +70,7 @@ Ansible 是一个基于 Python 开发的配置管理和应用部署工具，现�
 
      > 运行前需要确保每台主机上有 `sudo` 权限！
      >
-     > `apt install sudo -y`
+     > 安装 sudo：`apt install sudo -y`
 
      使用 `ansible-playbook nginx.yml` 运行文件，会得到报错，如下：
 
@@ -126,3 +126,178 @@ Ansible 是一个基于 Python 开发的配置管理和应用部署工具，现�
      ![202407190837359](https://oss.isiou.cn//images/202407190837359.png)
 
      代表 Nginx 服务已安装在目标主机（192.168.110.121 和 192.168.110.122）上并启动成功。
+
+### 使用 Ansible 执行脚本进行配置
+
+本节将介绍使用 Ansible 完成以下操作：更新 apt 源、更新系统、安装 vim、允许 root 用户登录、设置 ls 颜色及简单别名（要求应用于所有用户）、设置系统字符集为 C.utf8（应用于所有用户）。
+
+> Ansible 安装、Inventory、密钥配置见上节。
+
+1. 编写 Shell 脚本，保存为 `/root/test.sh`：
+
+   ```shell
+   #!/bin/bash
+   apt update
+   apt upgrade -y
+   apt install vim -y
+   # 查找 PermitRootLogin prohibit-password 将其替换为 PermitRootLogin yes
+   sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
+   systemctl restart ssh
+   # 追加
+   export LS_OPTIONS='--color=auto' >> /etc/environment
+   eval "$(dircolors)" >> /etc/environment
+   alias ls='ls $LS_OPTIONS' >> /etc/environment
+   alias ll='ls $LS_OPTIONS -l' >> /etc/environment
+   alias l='ls $LS_OPTIONS -lA' >> /etc/environment
+   echo "LANG=C.utf8" >> /etc/default/locale
+   echo "LANGUAGE=C.utf8" >> /etc/default/locale
+   ```
+
+2. 新建 `sh.yml` 文件，写入以下内容：
+
+   ```yml
+   ---
+   - name: 配置脚本
+     hosts: all
+     become: yes
+     tasks:
+       - name: 复制脚本到主机
+         copy:
+           src: /root/test.sh
+           dest: /root/test.sh
+           mode: "0755"
+
+       - name: 执行脚本
+         command: /root/test.sh
+   ```
+
+3. 使用 `ansible-playbook sh.yml` 执行脚本：
+
+   ![20240806092810](https://oss.isiou.cn/images/20240806092810.png)
+
+### 使用 Ansible 部署 Prometheus 监控
+
+1. 创建 `install-Prometheus.yml` 并写入以下内容：
+
+   ```yml
+   ---
+   - name: 安装和配置 Prometheus
+     hosts: all
+     become: yes
+     tasks:
+       - name: 创建 Prometheus 用户
+         user:
+           name: prometheus
+           system: yes
+           shell: /bin/false
+
+       - name: 创建配置目录
+         file:
+           # 创建文件夹，使用递归方式，with_item 中
+           path: "{{ item }}"
+           state: directory
+           # 所有者和所属组
+           owner: prometheus
+           group: prometheus
+           # 权限
+           mode: "0755"
+         with_items:
+           - /etc/prometheus
+           - /var/lib/prometheus
+
+       - name: 下载 Prometheus
+         # wget 下载
+         get_url:
+           url: "https://github.com/prometheus/prometheus/releases/download/v2.54.0-rc.0/prometheus-2.54.0-rc.0.linux-amd64.tar.gz"
+           # 下载目录
+           dest: /root/
+
+       - name: 解压 Prometheus
+         # 解压命令
+         command: tar -xzf /root/prometheus-2.54.0-rc.0.linux-amd64.tar.gz
+
+       # 将各文件移动到指定目录下
+       - name: 移动 Prometheus 二进制文件
+         copy:
+           remote_src: yes
+           src: /root/prometheus-2.54.0-rc.0.linux-amd64/prometheus
+           dest: /usr/local/bin/prometheus
+           owner: prometheus
+           group: prometheus
+           mode: "0755"
+
+       - name: 移动 Prometheus 工具文件
+         copy:
+           remote_src: yes
+           src: /root/prometheus-2.54.0-rc.0.linux-amd64/promtool
+           dest: /usr/local/bin/promtool
+           owner: prometheus
+           group: prometheus
+           mode: "0755"
+
+       - name: 移动 Prometheus 配置文件
+         copy:
+           remote_src: yes
+           src: /root/prometheus-2.54.0-rc.0.linux-amd64/prometheus.yml
+           dest: /etc/prometheus/prometheus.yml
+           owner: prometheus
+           group: prometheus
+           mode: "0644"
+
+       - name: 移动 Prometheus 控制台文件
+         copy:
+           remote_src: yes
+           src: /root/prometheus-2.54.0-rc.0.linux-amd64/consoles
+           dest: /etc/prometheus/consoles
+           owner: prometheus
+           group: prometheus
+           mode: "0755"
+
+       - name: 移动 Prometheus 控制台库文件
+         copy:
+           remote_src: yes
+           src: /root/prometheus-2.54.0-rc.0.linux-amd64/console_libraries
+           dest: /etc/prometheus/console_libraries
+           owner: prometheus
+           group: prometheus
+           mode: "0755"
+
+       # 配置服务
+       - name: 创建 Prometheus systemd 服务文件
+         copy:
+           dest: /etc/systemd/system/prometheus.service
+           content: |
+             [Unit]
+             Description=Prometheus
+             Wants=network-online.target
+             After=network-online.target
+
+             [Service]
+             User=prometheus
+             Group=prometheus
+             Type=simple
+             ExecStart=/usr/local/bin/prometheus \
+               --config.file /etc/prometheus/prometheus.yml \
+               --storage.tsdb.path /var/lib/prometheus/
+
+             [Install]
+             WantedBy=multi-user.target
+
+       - name: 重新加载 systemd
+         command: systemctl daemon-reload
+
+       # 启动 Prometheus
+       - name: 启用并启动 Prometheus 服务
+         systemd:
+           name: prometheus
+           enabled: yes
+           state: started
+   ```
+
+2. 使用 `ansible-playbook install-Prometheus.yml` 执行任务：
+
+   ![20240806110451](https://oss.isiou.cn/images/20240806110451.png)
+
+3. 访问 192.168.xxx.xx:9090 查看面板：
+
+   ![20240806110613](https://oss.isiou.cn/images/20240806110613.png)
